@@ -13,6 +13,7 @@ namespace chronicles {
 
 class thread_pool {
 public:
+
     /* CONSTRUCTORS */
 
     thread_pool() : end_work{0} {
@@ -49,8 +50,8 @@ public:
         std::future<RetType> ft = spt->get_future();
         {
             std::lock_guard<std::mutex> lck(mtx_q);
-            task_q.emplace([my_pt = spt]() {
-                (*my_pt)();
+            task_q.emplace([my_package = spt]() {
+                (*my_package)();
             });
             cv.notify_one();
         }
@@ -96,6 +97,7 @@ private:
 private:
 
     /* MEMBER VARIABLES */
+
     std::atomic<bool> end_work;
     std::vector<std::thread> threads;
     std::mutex mtx_q;
