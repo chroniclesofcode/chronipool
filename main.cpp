@@ -2,7 +2,8 @@
 #include "thread_pool.hpp"
 
 int main(void) {
-    std::cout << "aloha!" << std::endl;
-    chronicles::thread_pool t;
+    chronicles::thread_pool tp;
+    std::future<int> ft = tp.push_task([](int x) { return x * x; }, 69);
+    std::cout << ft.get() << std::endl;
     return 0;
 }
