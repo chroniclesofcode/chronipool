@@ -16,14 +16,8 @@ public:
 
     /* CONSTRUCTORS */
 
-    thread_pool() : end_work{0} {
-        for (int i = 0; i < std::thread::hardware_concurrency(); i++) {
-            threads.emplace_back(std::thread(&thread_pool::execute_task, this));
-        }
-    }
-
-    thread_pool(int init_threads) : end_work{0} {
-        for (int i = 0; i < init_threads; i++) {
+    thread_pool(unsigned int init_threads = std::thread::hardware_concurrency()) : end_work{0} {
+        for (unsigned int i = 0; i < init_threads; i++) {
             threads.emplace_back(std::thread(&thread_pool::execute_task, this));
         }
     }
