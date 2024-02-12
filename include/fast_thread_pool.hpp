@@ -13,8 +13,7 @@ namespace chronicles {
 
 
 class fast_thread_pool {
-private:
-
+public:
     /* HELPER CLASS DEFINITION */
 
     // we will have a pointer of generic type to a derived class (of generic
@@ -73,7 +72,7 @@ public:
 
     ~fast_thread_pool() {
         end_work.store(true);
-        cv.notify_all();
+        // cv.notify_all();
         for (auto& t : threads) {
             if (t.joinable())
                 t.join();
@@ -92,14 +91,16 @@ public:
         Package pt(func);
         std::future<RetType> ft = pt.get_future();
         FnWrapper wrapped_package(std::move(pt));
-        {
+        // If current thread is a worker
+        if (local_q) {
+            local_q->emplace([my_package = std::move(wrapped_package)]() mutable {
+                my_package();
+            });
+        } else {
             std::lock_guard<std::mutex> lck(mtx_q);
-            
             task_q.emplace([my_package = std::move(wrapped_package)]() mutable {
                 my_package();
             });
-            
-            cv.notify_one();
         }
         return ft;
     }
@@ -120,39 +121,34 @@ public:
         func();
     }
 
-    /*
-    template<typename Ret, typename... Args>
-    auto push_task(Ret func, Args&&... args) -> std::future<decltype(func(std::forward<Args>(args)...))> {
-        using RetType = decltype(func(std::forward<Args>(args)...));
-        std::packaged_task<RetType(Args...)> pt(func);
-        std::future<RetType> ft = pt.get_future();
-        {
-            std::lock_guard lck(mtx_q);
-            task_q.emplace([my_pt = std::move(pt), ...prms = std::forward<Args>(args)]() {
-                my_pt(prms...);
-            });
-        }
-        //pt(std::forward<Args>(args)...);
-        return ft;
-    }
-    */
-
 private:
 
     /* HELPER FUNCTIONS */
 
     void execute_task() {
+        local_q.reset(new std::queue<FnWrapper>);
         while (!end_work) {
             FnWrapper func;
+            bool run = false;
             {
-                std::unique_lock<std::mutex> lck(mtx_q);
-                cv.wait(lck, [&]() { return !task_q.empty() || end_work; });
-                if (end_work) break;
-
-                func = std::move(task_q.front());
-                task_q.pop();
+                // There is a queue on this thread
+                if (local_q && !local_q->empty()) {
+                    func = std::move(local_q->front());
+                    local_q->pop();
+                    run = true;
+                } else {
+                    std::lock_guard<std::mutex> lck(mtx_q);
+                    if (task_q.empty()) continue;
+                    func = std::move(task_q.front());
+                    task_q.pop();
+                    run = true;
+                }
             }
-            func();
+            if (run) {
+                func();
+            } else {
+                std::this_thread::yield();
+            }
         }
     }
 
@@ -165,6 +161,9 @@ private:
     std::mutex mtx_q;
     std::condition_variable cv;
     std::queue<FnWrapper> task_q;
+    static thread_local std::unique_ptr<std::queue<FnWrapper>> local_q;
 };
 
 }
+
+thread_local std::unique_ptr<std::queue<chronicles::fast_thread_pool::FnWrapper>> chronicles::fast_thread_pool::local_q{};
