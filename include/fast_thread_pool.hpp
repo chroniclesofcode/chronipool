@@ -55,6 +55,43 @@ public:
         FnWrapper(const FnWrapper& other) = delete;
     };
 
+    struct StealableQueue {
+        StealableQueue() = default;
+
+        void push(FnWrapper val) {
+            std::lock_guard<std::mutex> lck(mtx_steal);
+            q.push_back(std::move(val));
+        }
+
+        bool try_pop(FnWrapper& val) {
+            std::lock_guard<std::mutex> lck(mtx_steal);
+            if (_empty()) return false;
+            val = std::move(q.front());
+            q.pop_front();
+            return true;
+        }
+
+        bool try_steal(FnWrapper& val) {
+            std::lock_guard<std::mutex> lck(mtx_steal);
+            if (_empty()) return false;
+            val = std::move(q.back());
+            q.pop_back();
+            return true;
+        }
+
+        bool empty() const {
+            std::lock_guard<std::mutex> lck(mtx_steal);
+            return _empty();
+        }
+
+        bool _empty() const {
+            return q.empty();
+        }
+
+        mutable std::mutex mtx_steal;
+        std::deque<FnWrapper> q;
+    };
+
 public:
 
     /* CONSTRUCTORS */
@@ -62,7 +99,10 @@ public:
     fast_thread_pool(unsigned int init_threads = std::thread::hardware_concurrency()) : end_work{false} {
         try {
             for (unsigned int i = 0; i < init_threads; i++) {
-                threads.emplace_back(std::thread(&fast_thread_pool::execute_task, this));
+                queues.push_back(std::make_unique<StealableQueue>());
+            }
+            for (unsigned int i = 0; i < init_threads; i++) {
+                threads.emplace_back(std::thread(&fast_thread_pool::execute_task, this, i));
             }
         } catch(...) {
             end_work = true;
@@ -93,7 +133,7 @@ public:
         FnWrapper wrapped_package(std::move(pt));
         // If current thread is a worker
         if (local_q) {
-            local_q->emplace([my_package = std::move(wrapped_package)]() mutable {
+            local_q->push([my_package = std::move(wrapped_package)]() mutable {
                 my_package();
             });
         } else {
@@ -125,23 +165,38 @@ private:
 
     /* HELPER FUNCTIONS */
 
-    void execute_task() {
-        local_q.reset(new std::queue<FnWrapper>);
+    bool try_work_steal(FnWrapper& val) {
+        for (unsigned int i = 0; i < queues.size(); i++) {
+            unsigned int idx = (i + curr_ct + 1) % queues.size();
+            if (queues[idx]->try_steal(val)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void execute_task(unsigned int index) {
+        curr_ct = index;
+        local_q = queues[index].get();
         while (!end_work) {
             FnWrapper func;
             bool run = false;
             {
                 // There is a queue on this thread
                 if (local_q && !local_q->empty()) {
-                    func = std::move(local_q->front());
-                    local_q->pop();
-                    run = true;
+                    if (local_q->try_pop(func)) run = true;
                 } else {
-                    std::lock_guard<std::mutex> lck(mtx_q);
-                    if (task_q.empty()) continue;
-                    func = std::move(task_q.front());
-                    task_q.pop();
-                    run = true;
+                    std::unique_lock<std::mutex> lck(mtx_q);
+                    if (!task_q.empty()) {
+                        func = std::move(task_q.front());
+                        task_q.pop();
+                        run = true;
+                    } else if (local_q) {
+                        lck.unlock();
+                        if (try_work_steal(func)) {
+                            run = true;
+                        }
+                    }
                 }
             }
             if (run) {
@@ -158,12 +213,16 @@ private:
 
     std::atomic<bool> end_work;
     std::vector<std::thread> threads;
+    std::vector<std::unique_ptr<StealableQueue>> queues;
     std::mutex mtx_q;
     std::condition_variable cv;
     std::queue<FnWrapper> task_q;
-    static thread_local std::unique_ptr<std::queue<FnWrapper>> local_q;
+
+    static thread_local StealableQueue *local_q;
+    static thread_local unsigned int curr_ct;
 };
 
 }
 
-thread_local std::unique_ptr<std::queue<chronicles::fast_thread_pool::FnWrapper>> chronicles::fast_thread_pool::local_q{};
+thread_local chronicles::fast_thread_pool::StealableQueue* chronicles::fast_thread_pool::local_q{nullptr};
+thread_local unsigned int chronicles::fast_thread_pool::curr_ct{0};

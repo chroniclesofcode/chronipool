@@ -34,7 +34,7 @@ expect more tasks to come in the queue soon.
 # API
 
 - Default constructor will use hardware_concurrency() to generate a maximum
-amount of threads
+amount of threads, or you can specify number of threads to create.
 
 - Submit task (push_task) will send a task into a queue, which will give you
 a future back that you can use later.
