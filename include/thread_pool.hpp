@@ -104,6 +104,22 @@ public:
         return ft;
     }
 
+    // When implementing parallel algorithms, one may encounter a case where
+    // they are waiting for another task to complete - however, there may be deadlock
+    // if all threads are actually at this 'waiting' stage, with no threads
+    // remaining to do the work waited for. So we provide a manual_run_task to
+    // make progress even while waiting (use carefully).
+    void manual_run_task() {
+        FnWrapper func;
+        {
+                std::unique_lock<std::mutex> lck(mtx_q);
+                if (task_q.empty()) return;
+                func = std::move(task_q.front());
+                task_q.pop();
+        }
+        func();
+    }
+
     /*
     template<typename Ret, typename... Args>
     auto push_task(Ret func, Args&&... args) -> std::future<decltype(func(std::forward<Args>(args)...))> {
