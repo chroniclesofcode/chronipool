@@ -41,7 +41,9 @@ a future back that you can use later.
 
 ```
 #include <future>
+#include "thread_pool.hpp"
 
+chronicles::thread_pool tp(4);
 std::future<int> ft = tp.push_task([]{ return 32; });
 int res = ft.get(); // <-- will be 32, after the thread pool executes function.
 ```
