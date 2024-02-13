@@ -78,7 +78,7 @@ std::list<T> parallel_quick_sort(std::list<T> input)
 }
 
 std::list<int> generateRandom() {
-    constexpr int LIM = (int)1000;
+    constexpr int LIM = (int)7000;
     std::list<int> ret;
     std::random_device dev;
     std::mt19937 rng(dev());
