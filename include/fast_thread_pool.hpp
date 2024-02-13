@@ -152,13 +152,28 @@ public:
     // make progress even while waiting (use carefully).
     void manual_run_task() {
         FnWrapper func;
-        {
-                std::unique_lock<std::mutex> lck(mtx_q);
-                if (task_q.empty()) return;
+        bool run = false;
+        // There is a queue on this thread
+        if (local_q && !local_q->empty()) {
+            if (local_q->try_pop(func)) run = true;
+        } else {
+            std::unique_lock<std::mutex> lck(mtx_q);
+            if (!task_q.empty()) {
                 func = std::move(task_q.front());
                 task_q.pop();
+                run = true;
+            } else if (local_q) {
+                lck.unlock();
+                if (try_work_steal(func)) {
+                    run = true;
+                }
+            }
         }
-        func();
+        if (run) {
+            func();
+        } else {
+            std::this_thread::yield();
+        }
     }
 
 private:
@@ -179,31 +194,7 @@ private:
         curr_ct = index;
         local_q = queues[index].get();
         while (!end_work) {
-            FnWrapper func;
-            bool run = false;
-            {
-                // There is a queue on this thread
-                if (local_q && !local_q->empty()) {
-                    if (local_q->try_pop(func)) run = true;
-                } else {
-                    std::unique_lock<std::mutex> lck(mtx_q);
-                    if (!task_q.empty()) {
-                        func = std::move(task_q.front());
-                        task_q.pop();
-                        run = true;
-                    } else if (local_q) {
-                        lck.unlock();
-                        if (try_work_steal(func)) {
-                            run = true;
-                        }
-                    }
-                }
-            }
-            if (run) {
-                func();
-            } else {
-                std::this_thread::yield();
-            }
+            manual_run_task();
         }
     }
 
