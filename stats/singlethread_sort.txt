@@ -4,7 +4,6 @@
 0 milliseconds
 0 milliseconds
 0 milliseconds
-1 milliseconds
 0 milliseconds
 0 milliseconds
 0 milliseconds
@@ -73,8 +72,9 @@
 0 milliseconds
 0 milliseconds
 0 milliseconds
-1 milliseconds
-1 milliseconds
+0 milliseconds
+0 milliseconds
+0 milliseconds
 0 milliseconds
 0 milliseconds
 0 milliseconds
@@ -104,8 +104,8 @@
 **** STATISTICS ****
 
 count: 100
-average: 0.03 milliseconds
-variance: 0.0291 milliseconds^2
-standard deviation: 0.170587 milliseconds
+average: 0 milliseconds
+variance: 0 milliseconds^2
+standard deviation: 0 milliseconds
 min: 0 milliseconds
-max: 1 milliseconds
+max: 0 milliseconds

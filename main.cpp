@@ -106,6 +106,7 @@ int main(void) {
     run_tests(chronicles::thread_pool());
     run_tests(chronicles::fast_thread_pool());
     qnd::timer timer("../stats/thread_pool.txt");
+    /*
     for (int i = 0; i < 100; i++) {
         std::cout << "at: " << i << std::endl;
         std::list<int> to_sort = generateRandom();
@@ -114,6 +115,7 @@ int main(void) {
         timer.stop();
     }
     timer.printStats();
+    */
     timer.reset("../stats/fast_thread_pool.txt");
     for (int i = 0; i < 100; i++) {
         std::cout << "at: " << i << std::endl;
@@ -123,6 +125,7 @@ int main(void) {
         timer.stop();
     }
     timer.printStats();
+    /*
     timer.reset("../stats/singlethread_sort.txt");
     for (int i = 0; i < 100; i++) {
         std::cout << "at: " << i << std::endl;
@@ -132,6 +135,7 @@ int main(void) {
         timer.stop();
     }
     timer.printStats();
+    */
     std::cout << tot << std::endl;
     return 0;
 }

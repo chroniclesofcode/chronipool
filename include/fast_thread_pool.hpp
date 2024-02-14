@@ -102,7 +102,7 @@ public:
                 queues.push_back(std::make_unique<StealableQueue>());
             }
             for (unsigned int i = 0; i < init_threads; i++) {
-                threads.emplace_back(std::thread(&fast_thread_pool::execute_task, this, i));
+                threads.push_back(std::thread(&fast_thread_pool::execute_task, this, i));
             }
         } catch(...) {
             end_work = true;
@@ -112,7 +112,6 @@ public:
 
     ~fast_thread_pool() {
         end_work.store(true);
-        // cv.notify_all();
         for (auto& t : threads) {
             if (t.joinable())
                 t.join();
@@ -154,8 +153,8 @@ public:
         FnWrapper func;
         bool run = false;
         // There is a queue on this thread
-        if (local_q && !local_q->empty()) {
-            if (local_q->try_pop(func)) run = true;
+        if (local_q && local_q->try_pop(func)) {
+            run = true;
         } else {
             std::unique_lock<std::mutex> lck(mtx_q);
             if (!task_q.empty()) {
@@ -181,7 +180,7 @@ private:
     /* HELPER FUNCTIONS */
 
     bool try_work_steal(FnWrapper& val) {
-        for (unsigned int i = 0; i < queues.size(); i++) {
+        for (unsigned int i = 0; i < queues.size() - 1; i++) {
             unsigned int idx = (i + curr_ct + 1) % queues.size();
             if (queues[idx]->try_steal(val)) {
                 return true;
