@@ -48,3 +48,11 @@ std::future<int> ft = tp.push_task([]{ return 32; });
 int res = ft.get(); // <-- will be 32, after the thread pool executes function.
 ```
 
+# Benchmarks
+
+On an implementation of parallel quicksort, the fast_thread_pool significantly
+outperforms the thread_pool -> as you can see in the stats page. However, the
+singlethreaded list<int>.sort() function is significantly faster than both
+implementations. I would love to know at which point a singlethreaded sort is
+slower than a parallel quicksort, but I do not have enough RAM to actually reach
+that point.
