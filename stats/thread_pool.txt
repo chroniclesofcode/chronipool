@@ -1,2 +1,111 @@
 **** TIMES ****
 
+12 milliseconds
+11 milliseconds
+12 milliseconds
+11 milliseconds
+11 milliseconds
+12 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+12 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+12 milliseconds
+12 milliseconds
+11 milliseconds
+11 milliseconds
+12 milliseconds
+11 milliseconds
+11 milliseconds
+12 milliseconds
+11 milliseconds
+11 milliseconds
+10 milliseconds
+11 milliseconds
+11 milliseconds
+10 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+12 milliseconds
+12 milliseconds
+11 milliseconds
+12 milliseconds
+11 milliseconds
+12 milliseconds
+11 milliseconds
+11 milliseconds
+12 milliseconds
+11 milliseconds
+12 milliseconds
+12 milliseconds
+12 milliseconds
+11 milliseconds
+12 milliseconds
+12 milliseconds
+11 milliseconds
+12 milliseconds
+12 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+11 milliseconds
+10 milliseconds
+10 milliseconds
+11 milliseconds
+13 milliseconds
+12 milliseconds
+12 milliseconds
+12 milliseconds
+12 milliseconds
+12 milliseconds
+13 milliseconds
+13 milliseconds
+12 milliseconds
+12 milliseconds
+12 milliseconds
+12 milliseconds
+13 milliseconds
+12 milliseconds
+13 milliseconds
+12 milliseconds
+12 milliseconds
+13 milliseconds
+12 milliseconds
+13 milliseconds
+12 milliseconds
+12 milliseconds
+13 milliseconds
+12 milliseconds
+14 milliseconds
+12 milliseconds
+11 milliseconds
+12 milliseconds
+11 milliseconds
+13 milliseconds
+13 milliseconds
+12 milliseconds
+11 milliseconds
+15 milliseconds
+12 milliseconds
+13 milliseconds
+13 milliseconds
+14 milliseconds
+
+**** STATISTICS ****
+
+count: 100
+average: 11.7 milliseconds
+variance: 0.77 milliseconds^2
+standard deviation: 0.877496 milliseconds
+min: 10 milliseconds
+max: 15 milliseconds

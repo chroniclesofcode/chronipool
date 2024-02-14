@@ -43,8 +43,8 @@ struct sorter
             new_lower_chunk.end(),
             chunk_data,chunk_data.begin(),
             divide_point);
-    
-        std::future<std::list<T>> new_lower=
+
+        std::future<std::list<T> > new_lower=
             pool.push_task(
                 std::bind(
                     &sorter::do_sort,this,
@@ -53,7 +53,7 @@ struct sorter
         std::list<T> new_higher(do_sort(chunk_data));
         
         result.splice(result.end(),new_higher);
-        while(!(new_lower.wait_for(std::chrono::seconds(0)) == std::future_status::ready))
+        while(new_lower.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
         {
             pool.manual_run_task();
         }
@@ -78,7 +78,7 @@ std::list<T> parallel_quick_sort(std::list<T> input)
 }
 
 std::list<int> generateRandom() {
-    constexpr int LIM = (int)7000;
+    constexpr int LIM = (int)5000;
     std::list<int> ret;
     std::random_device dev;
     std::mt19937 rng(dev());
@@ -105,8 +105,8 @@ void benchmark_singlethread_sort(std::list<int> to_sort) {
 int main(void) {
     run_tests(chronicles::thread_pool());
     run_tests(chronicles::fast_thread_pool());
+
     qnd::timer timer("../stats/thread_pool.txt");
-    /*
     for (int i = 0; i < 100; i++) {
         std::cout << "at: " << i << std::endl;
         std::list<int> to_sort = generateRandom();
@@ -115,7 +115,6 @@ int main(void) {
         timer.stop();
     }
     timer.printStats();
-    */
     timer.reset("../stats/fast_thread_pool.txt");
     for (int i = 0; i < 100; i++) {
         std::cout << "at: " << i << std::endl;
@@ -125,7 +124,6 @@ int main(void) {
         timer.stop();
     }
     timer.printStats();
-    /*
     timer.reset("../stats/singlethread_sort.txt");
     for (int i = 0; i < 100; i++) {
         std::cout << "at: " << i << std::endl;
@@ -135,7 +133,6 @@ int main(void) {
         timer.stop();
     }
     timer.printStats();
-    */
     std::cout << tot << std::endl;
     return 0;
 }
